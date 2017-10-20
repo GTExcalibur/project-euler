@@ -5,7 +5,15 @@ import java.math.BigInteger;
 /**
  * Created by IntelliJ IDEA.
  * <br> Date: 10/19/2017, Time: 10:22 PM
- * <br> Problem 4
+ * <br> Problem 4 - Largest palindrome product
+ * <pre>
+ *
+
+ A palindromic number reads the same both ways. The largest palindrome made from the product of two 2-digit numbers is 9009 = 91 × 99.
+
+ Find the largest palindrome made from the product of two 3-digit numbers.
+
+ * </pre>
  * @author George Turner
  */
 public class Problem_004 {
