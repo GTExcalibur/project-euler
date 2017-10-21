@@ -42,4 +42,30 @@ public final class FactorUtils {
         };
         return StreamSupport.stream(smallFactors, false);
     }
+
+    public static Stream<BigInteger> properDivisors(BigInteger source) {
+        Spliterator<BigInteger> smallFactors =
+                new MultipleElementSpliterator<BigInteger>(Long.MAX_VALUE, Spliterator.NONNULL) {
+
+            final List<BigInteger> largeFactors = new ArrayList<>();
+            BigInteger next = BigInteger.ZERO;
+
+            @Override
+            protected boolean tryAdvanceMultiple(Consumer<? super BigInteger> action) {
+                next = next.add(BigInteger.ONE);
+                if (next.multiply(next).compareTo(source) >= 0) {
+                    if(!largeFactors.isEmpty()) {
+                        largeFactors.subList(0, largeFactors.size()-1).forEach(action);
+                    }
+                    return false;
+                }
+                if (isFactor(source, next)) {
+                    largeFactors.add(0, source.divide(next));
+                    action.accept(next);
+                }
+                return true;
+            }
+        };
+        return StreamSupport.stream(smallFactors, false);
+    }
 }
