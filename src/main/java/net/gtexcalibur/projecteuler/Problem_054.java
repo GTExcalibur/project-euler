@@ -1,10 +1,13 @@
 package net.gtexcalibur.projecteuler;
 
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Set;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.*;
+import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 /**
  * Created by George Turner on 10/20/2017.
@@ -71,75 +74,238 @@ import java.util.function.Predicate;
 public class Problem_054 {
 
     private static boolean isRoyalFlush(Set<String> player) {
-        return false;
+        return isFlush(player) && isStraight(player) && player.stream().allMatch(c -> !Character.isDigit(c.charAt(0)));
     }
 
     private static int compareRoyalFlush(Set<String> player1, Set<String> player2) {
+        // always a tie
         return 0;
     }
 
     private static boolean isStraightFlush(Set<String> player) {
-        return false;
+        return isFlush(player) && isStraight(player);
     }
 
     private static int compareStraightFlush(Set<String> player1, Set<String> player2) {
-        return 0;
+        // compare high cards
+        return compareFace(
+                player1.stream().sorted(Problem_054::compareFace).skip(4).findFirst().orElse(""),
+                player2.stream().sorted(Problem_054::compareFace).skip(4).findFirst().orElse("")
+        );
     }
 
     private static boolean isFourOfAKind(Set<String> player) {
-        return false;
+        return player.stream().map(c -> c.charAt(0))
+                              .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
+                              .entrySet().stream().filter(group -> group.getValue() == 4)
+                              .findFirst().isPresent();
     }
 
     private static int compareFourOfAKind(Set<String> player1, Set<String> player2) {
-        return 0;
+        String play1High = player1.stream().map(c -> c.charAt(0))
+                .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
+                .entrySet().stream().filter(group -> group.getValue() == 4)
+                .findFirst().map(r -> r + "S").orElse("");
+        String play2High = player2.stream().map(c -> c.charAt(0))
+                .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
+                .entrySet().stream().filter(group -> group.getValue() == 4)
+                .findFirst().map(r -> r + "S").orElse("");
+        int compare = compareFace(play1High, play2High);
+        if (compare == 0) {
+            play1High = player1.stream().map(c -> c.charAt(0))
+                            .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
+                            .entrySet().stream().filter(group -> group.getValue() == 1)
+                            .findFirst().map(r -> r + "S").orElse("");
+            play2High = player2.stream().map(c -> c.charAt(0))
+                            .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
+                            .entrySet().stream().filter(group -> group.getValue() == 1)
+                            .findFirst().map(r -> r + "S").orElse("");
+            compare = compareFace(play1High, play2High);
+        }
+
+        return compare;
     }
 
     private static boolean isFullHouse(Set<String> player) {
-        return false;
+        Map<Character, Long> groups = player.stream().map(c -> c.charAt(0))
+                .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
+        return groups.size() == 2 && groups.entrySet().stream().allMatch(group -> group.getValue() >= 2);
     }
 
     private static int compareFullHouse(Set<String> player1, Set<String> player2) {
-        return 0;
+        String play1High = player1.stream().map(c -> c.charAt(0))
+                .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
+                .entrySet().stream().filter(group -> group.getValue() == 3)
+                .findFirst().map(r -> r + "S").orElse("");
+        String play2High = player2.stream().map(c -> c.charAt(0))
+                .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
+                .entrySet().stream().filter(group -> group.getValue() == 3)
+                .findFirst().map(r -> r + "S").orElse("");
+        int compare = compareFace(play1High, play2High);
+        if (compare == 0) {
+            play1High = player1.stream().map(c -> c.charAt(0))
+                            .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
+                            .entrySet().stream().filter(group -> group.getValue() == 2)
+                            .findFirst().map(r -> r + "S").orElse("");
+            play2High = player2.stream().map(c -> c.charAt(0))
+                            .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
+                            .entrySet().stream().filter(group -> group.getValue() == 2)
+                            .findFirst().map(r -> r + "S").orElse("");
+            compare = compareFace(play1High, play2High);
+        }
+
+        return compare;
     }
 
     private static boolean isFlush(Set<String> player) {
-        return false;
+        return player.stream().map(c -> c.charAt(1))
+                              .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
+                              .entrySet().size() == 1;
     }
 
     private static int compareFlush(Set<String> player1, Set<String> player2) {
-        return 0;
+        // compare high cards
+        return compareFace(
+                player1.stream().sorted(Problem_054::compareFace).skip(4).findFirst().orElse(""),
+                player2.stream().sorted(Problem_054::compareFace).skip(4).findFirst().orElse("")
+        );
     }
 
     private static boolean isStraight(Set<String> player) {
+        boolean uniqueCards = player.stream().map(c -> c.charAt(0))
+                .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
+                .entrySet().size() == 5;
+        if(uniqueCards) {
+            List<String> sorted = player.stream().sorted(Problem_054::compareFace).collect(Collectors.toList());
+            return scoreCard(sorted.get(4)) - scoreCard(sorted.get(0)) == 4;
+        }
         return false;
     }
 
     private static int compareStraight(Set<String> player1, Set<String> player2) {
-        return 0;
+        // compare high cards
+        return compareFace(
+                player1.stream().sorted(Problem_054::compareFace).skip(4).findFirst().orElse(""),
+                player2.stream().sorted(Problem_054::compareFace).skip(4).findFirst().orElse("")
+        );
     }
 
     private static boolean isThreeOfAKind(Set<String> player) {
-        return false;
+        return player.stream().map(c -> c.charAt(0))
+                              .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
+                              .entrySet().stream().filter(group -> group.getValue() == 3)
+                              .findFirst().isPresent();
     }
 
     private static int compareThreeOfAKind(Set<String> player1, Set<String> player2) {
-        return 0;
+        String play1High = player1.stream().map(c -> c.charAt(0))
+                        .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
+                        .entrySet().stream().filter(group -> group.getValue() == 3)
+                        .findFirst().map(r -> r + "S").orElse("");
+        String play2High = player2.stream().map(c -> c.charAt(0))
+                .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
+                .entrySet().stream().filter(group -> group.getValue() == 3)
+                .findFirst().map(r -> r + "S").orElse("");
+        int compare = compareFace(play1High, play2High);
+        if (compare == 0) {
+            List<String> play1rem = player1.stream().map(c -> c.charAt(0))
+                    .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
+                    .entrySet().stream().filter(group -> group.getValue() != 3)
+                    .map(r -> r + "S").sorted(((Comparator<String>) Problem_054::compareFace).reversed()).collect(Collectors.toList());
+            List<String> play2rem = player2.stream().map(c -> c.charAt(0))
+                    .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
+                    .entrySet().stream().filter(group -> group.getValue() != 3)
+                    .map(r -> r + "S").sorted(((Comparator<String>) Problem_054::compareFace).reversed()).collect(Collectors.toList());
+            for(int i = 0; i < 2; i++) {
+                compare = compareFace(play1rem.get(i), play2rem.get(i));
+                if(compare != 0) {
+                    break;
+                }
+            }
+        }
+
+        return compare;
     }
 
     private static boolean isTwoPairs(Set<String> player) {
-        return false;
+        return player.stream().map(c -> c.charAt(0))
+                              .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
+                              .entrySet().stream().filter(group -> group.getValue() == 2)
+                              .count() == 2;
     }
 
     private static int compareTwoPairs(Set<String> player1, Set<String> player2) {
-        return 0;
+        String play1High = player1.stream().map(c -> c.charAt(0))
+                .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
+                .entrySet().stream().filter(group -> group.getValue() == 2)
+                .map(group -> group.getKey() + "S").sorted(((Comparator<String>) Problem_054::compareFace).reversed()).findFirst().orElse("");
+        String play2High = player2.stream().map(c -> c.charAt(0))
+                .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
+                .entrySet().stream().filter(group -> group.getValue() == 2)
+                .map(group -> group.getKey() + "S").sorted(((Comparator<String>) Problem_054::compareFace).reversed()).findFirst().orElse("");
+        int compare = compareFace(play1High, play2High);
+        if (compare == 0) {
+            play1High = player1.stream().map(c -> c.charAt(0))
+                    .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
+                    .entrySet().stream().filter(group -> group.getValue() == 2)
+                    .map(group -> group.getKey() + "S").sorted(Problem_054::compareFace).findFirst().orElse("");
+            play2High = player2.stream().map(c -> c.charAt(0))
+                    .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
+                    .entrySet().stream().filter(group -> group.getValue() == 2)
+                    .map(group -> group.getKey() + "S").sorted(Problem_054::compareFace).findFirst().orElse("");
+            compare = compareFace(play1High, play2High);
+
+            if (compare == 0) {
+                play1High = player1.stream().map(c -> c.charAt(0))
+                        .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
+                        .entrySet().stream().filter(group -> group.getValue() == 1)
+                        .findFirst().map(r -> r + "S").orElse("");
+                play2High = player2.stream().map(c -> c.charAt(0))
+                        .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
+                        .entrySet().stream().filter(group -> group.getValue() == 1)
+                        .findFirst().map(r -> r + "S").orElse("");
+                compare = compareFace(play1High, play2High);
+            }
+        }
+
+        return compare;
     }
 
     private static boolean isPair(Set<String> player) {
-        return false;
+        return player.stream().map(c -> c.charAt(0))
+                              .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
+                              .entrySet().stream().filter(group -> group.getValue() == 2)
+                              .findFirst().isPresent();
     }
 
     private static int comparePair(Set<String> player1, Set<String> player2) {
-        return 0;
+        String play1High = player1.stream().map(c -> c.charAt(0))
+                        .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
+                        .entrySet().stream().filter(group -> group.getValue() == 2)
+                        .findFirst().map(r -> r + "S").orElse("");
+        String play2High = player2.stream().map(c -> c.charAt(0))
+                .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
+                .entrySet().stream().filter(group -> group.getValue() == 2)
+                .findFirst().map(r -> r + "S").orElse("");
+        int compare = compareFace(play1High, play2High);
+        if (compare == 0) {
+            List<String> play1rem = player1.stream().map(c -> c.charAt(0))
+                    .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
+                    .entrySet().stream().filter(group -> group.getValue() != 2)
+                    .map(r -> r + "S").sorted(((Comparator<String>) Problem_054::compareFace).reversed()).collect(Collectors.toList());
+            List<String> play2rem = player2.stream().map(c -> c.charAt(0))
+                    .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
+                    .entrySet().stream().filter(group -> group.getValue() != 2)
+                    .map(r -> r + "S").sorted(((Comparator<String>) Problem_054::compareFace).reversed()).collect(Collectors.toList());
+            for(int i = 0; i < 3; i++) {
+                compare = compareFace(play1rem.get(i), play2rem.get(i));
+                if(compare != 0) {
+                    break;
+                }
+            }
+        }
+
+        return compare;
     }
 
     private static boolean isHighCard(Set<String> player) {
@@ -147,7 +313,33 @@ public class Problem_054 {
     }
 
     private static int compareHighCard(Set<String> player1, Set<String> player2) {
-        return 0;
+        int compare = 0;
+        List<String> play1rem = player1.stream()
+                .sorted(((Comparator<String>) Problem_054::compareFace).reversed()).collect(Collectors.toList());
+        List<String> play2rem = player2.stream()
+                .sorted(((Comparator<String>) Problem_054::compareFace).reversed()).collect(Collectors.toList());
+        for(int i = 0; i < 5; i++) {
+            compare = compareFace(play1rem.get(i), play2rem.get(i));
+            if(compare != 0) {
+                break;
+            }
+        }
+        return compare;
+    }
+
+    private static int compareFace(String c1, String c2) {
+        return scoreCard(c1) - scoreCard(c2);
+    }
+
+    private static int scoreCard(String card) {
+        switch (card.charAt(0)) {
+            case 'A': return 14;
+            case 'K': return 13;
+            case 'Q': return 12;
+            case 'J': return 11;
+            case 'T': return 10;
+            default: return Character.getNumericValue(card.charAt(0));
+        }
     }
 
     enum PlayerHand {
@@ -179,7 +371,7 @@ public class Problem_054 {
         }
     }
 
-    private static int compare(Set<String> player1, Set<String> player2) {
+    static int compare(Set<String> player1, Set<String> player2) {
         PlayerHand playerHand1 = Arrays.stream(
                 PlayerHand.values()
         ).filter(ph -> ph.doesMatch(player1)).findFirst().orElse(PlayerHand.HIGH_CARD);
@@ -191,14 +383,38 @@ public class Problem_054 {
         if(compare == 0) {
             return playerHand1.compare(player1, player2);
         } else {
-            return compare;
+            return -1 * compare;
         }
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
+        int player1Wins[] = { 0 };
 
+        try (InputStream is = Problem_054.class.getResourceAsStream("/p054_poker.txt")) {
+            new BufferedReader(new InputStreamReader(is))
+                    .lines()
+                    .forEach(line -> {
+                        String[] cards = line.split(" ");
+
+                        Set<String> player1 = Arrays.stream(cards).limit(5).collect(Collectors.toSet());
+                        Set<String> player2 = Arrays.stream(cards).skip(5).collect(Collectors.toSet());
+
+                        PlayerHand playerHand1 = Arrays.stream(
+                                PlayerHand.values()
+                        ).filter(ph -> ph.doesMatch(player1)).findFirst().orElse(PlayerHand.HIGH_CARD);
+                        PlayerHand playerHand2 = Arrays.stream(
+                                PlayerHand.values()
+                        ).filter(ph -> ph.doesMatch(player2)).findFirst().orElse(PlayerHand.HIGH_CARD);
+
+                        if(compare(player1, player2) > 0) {
+                            player1Wins[0]++;
+                            System.out.println(line + " - Player 1" + "    - " + playerHand1 + "    - " + playerHand2);
+                        } else {
+                            System.out.println(line + " - Player 2" + "    - " + playerHand1 + "    - " + playerHand2);
+                        }
+                    });
+        }
+
+        System.out.println(player1Wins[0]);
     }
-
-
-
 }
