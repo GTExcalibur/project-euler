@@ -3,7 +3,6 @@ package net.gtexcalibur.projecteuler;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.LongStream;
-import java.util.stream.Stream;
 
 /**
  * Created by George Turner on 10/20/2017.
