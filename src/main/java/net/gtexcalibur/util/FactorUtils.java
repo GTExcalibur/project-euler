@@ -29,11 +29,13 @@ public final class FactorUtils {
             @Override
             protected boolean tryAdvanceMultiple(Consumer<? super BigInteger> action) {
                 next = next.add(BigInteger.ONE);
-                if (next.multiply(next).compareTo(source) >= 0) {
+                int compare = next.multiply(next).compareTo(source);
+                if (compare > 0) {
                     largeFactors.forEach(action);
                     return false;
-                }
-                if (isFactor(source, next)) {
+                } else if(compare == 0) {
+                    action.accept(next);
+                } else if (isFactor(source, next)) {
                     largeFactors.add(0, source.divide(next));
                     action.accept(next);
                 }
@@ -53,13 +55,15 @@ public final class FactorUtils {
             @Override
             protected boolean tryAdvanceMultiple(Consumer<? super BigInteger> action) {
                 next = next.add(BigInteger.ONE);
-                if (next.multiply(next).compareTo(source) >= 0) {
+                int compare = next.multiply(next).compareTo(source);
+                if (compare > 0) {
                     if(!largeFactors.isEmpty()) {
                         largeFactors.subList(0, largeFactors.size()-1).forEach(action);
                     }
                     return false;
-                }
-                if (isFactor(source, next)) {
+                } else if(compare == 0) {
+                    action.accept(next);
+                } else if (isFactor(source, next)) {
                     largeFactors.add(0, source.divide(next));
                     action.accept(next);
                 }
