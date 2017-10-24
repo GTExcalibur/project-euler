@@ -58,8 +58,6 @@ public class Problem_254 {
         return BigInteger.valueOf( function_f(n).toString().chars().map(Character::getNumericValue).sum() );
     }
 
-    static Map<BigInteger, BigInteger> tempMap;
-
     static BigInteger function_g(BigInteger n) {
         // here's the brute force ... WAY TOO SLOW!
         /*return Stream.iterate(BigInteger.ONE, BigInteger.ONE::add)
@@ -74,54 +72,12 @@ public class Problem_254 {
                 .findFirst()
                 .orElseThrow(IllegalStateException::new);*/
 
+        return null;
 
-        if(tempMap == null) {
-            tempMap = new ConcurrentHashMap<>();
 
-            // prepopulate the map once ... and even this is too SLOW!
-            /*enumerationsLimited(Arrays.asList("0", "1", "2", "3", "4", "5", "6", "7", "8", "9"), 15)
-                    .skip(1)
-                    .map(local -> new BigInteger(local.stream().collect(Collectors.joining())))
-                    .forEach(local -> tempMap.putIfAbsent(function_sf(local), local));*/
 
-            ExecutorService executorService = Executors.newFixedThreadPool(25);
-            AtomicLong peek = new AtomicLong(0);
 
-            StreamSupport.stream(new RestrictedEnumerationsSpliterator(300), false)
-                    .skip(1)
-//                    .map(BigInteger::new);
-//                    .forEach(local -> tempMap.putIfAbsent(function_sf(local), local));
-                    .peek(local -> {
-                        if(peek.incrementAndGet() % 100000 == 0) {
-                            System.out.println("mapSize: " + tempMap.size() + "   - local: " + new BigInteger(local));
-                        }
-                    })
-                    .peek(local -> {
-                        executorService.submit(() -> {
-                            BigInteger value = new BigInteger(local);
-                            BigInteger keyValue = function_sf(value);
 
-                            tempMap.compute(keyValue, (oldKey, oldValue) -> {
-                                if(oldValue == null || oldValue.compareTo(value) > 0) {
-                                    return value;
-                                } else {
-                                    return oldValue;
-                                }
-                            });
-                        });
-                    })
-                    .filter(ignore -> tempMap.size() > 150)
-                    .findFirst();
-
-            try {
-                executorService.shutdown();
-                executorService.awaitTermination(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-            System.out.println(tempMap);
-        }
-        return tempMap.get(n);
     }
 
     static BigInteger function_sg(BigInteger n) {
