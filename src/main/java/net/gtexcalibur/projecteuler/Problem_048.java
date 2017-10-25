@@ -38,6 +38,6 @@ public class Problem_048 {
                                   .reduce(BigInteger.ZERO, BigInteger::add);
 
         String longAnswer = answer.toString();
-        System.out.println("answer: " + answer.substring(longAnswer.length()-10, longAnswer.length()));
+        System.out.println("answer: " + answer.longAnswer(longAnswer.length()-10, longAnswer.length()));
     }
 }
