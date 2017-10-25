@@ -32,14 +32,13 @@ import java.util.stream.Stream;
  */
 public class Problem_046 {
 
-    private static final BigInteger TWO = BigInteger.valueOf(2);
-
     static boolean canWriteAsSumOfPrimeAndTwiceASquare(long test) {
-        long limit = (long) Math.sqrt(test) + 1;
-        return LongStream.range(1, limit)
-                         .filter(square -> BigInteger.valueOf(test - (square * square * 2)).isProbablePrime(20))
-                         .findFirst()
-                         .isPresent();
+        long limit = (long) Math.sqrt(test / 2) + 1;
+        OptionalLong local = LongStream.range(1, limit)
+                                       .filter(square -> BigInteger.valueOf(test - (square * square * 2))
+                                                                   .isProbablePrime(20))
+                                       .findFirst();
+        return local.isPresent();
     }
 
     public static void main(String[] args) {
