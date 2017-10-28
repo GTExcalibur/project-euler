@@ -1,10 +1,9 @@
 package net.gtexcalibur.projecteuler;
 
-import net.gtexcalibur.stream.MultipleElementSpliterator;
-
+import java.math.BigInteger;
 import java.util.*;
-import java.util.function.Consumer;
-import java.util.stream.*;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 /**
  * Created by IntelliJ IDEA.
@@ -30,21 +29,45 @@ import java.util.stream.*;
  */
 public class Problem_078 {
 
-    /*private static void sample() {
-        *//*long count = StreamSupport.stream(new DynamicCoinRestrictedEnumerationSpliterator(5), false)
-                                  .count();*//*
-        long count = countMathematically(5);
-        System.out.println("count: " + count);
-    }*/
-
-    private static boolean testBruteForce(int value) {
-        return StreamSupport.stream(new DynamicCoinRestrictedEnumerationSpliterator(value), false)
-                            .skip(999999)
-                            .findFirst()
-                            .isPresent();
+    private static final Map<BigInteger, BigInteger> permutationCache = new HashMap<>();
+    static {
+        permutationCache.putIfAbsent(BigInteger.ZERO, BigInteger.ONE);
     }
 
-    private static boolean testCalculation(int value) {
+    static BigInteger permutationFunction(BigInteger n) {
+        return permutationCache.computeIfAbsent(n, safe -> {
+            BigInteger sum = BigInteger.ZERO;
+
+            Iterator<BigInteger> generalPentagonalNumbers = Stream.iterate(BigInteger.ONE, BigInteger.ONE::add)
+                                                                  .flatMap(i -> Stream.of(i, BigInteger.valueOf(-1).multiply(i)))
+                                                                  .iterator();
+
+            BigInteger element = generalPentagonalNumbers.next();
+
+            BigInteger pentagonNumber = applyPentagonalFormula(element);
+
+            while(pentagonNumber.compareTo(safe) <= 0) {
+                boolean add = Math.pow(-1, Math.abs(element.longValue()) - 1) > 0;
+                if(add) {
+                    sum = sum.add(permutationFunction(safe.subtract(pentagonNumber)));
+                } else {
+                    sum = sum.subtract(permutationFunction(safe.subtract(pentagonNumber)));
+                }
+
+                element = generalPentagonalNumbers.next();
+                pentagonNumber = applyPentagonalFormula(element);
+            }
+
+            return sum;
+
+        });
+    }
+
+    private static BigInteger applyPentagonalFormula(BigInteger n) {
+        return n.multiply(BigInteger.valueOf(3)).subtract(BigInteger.ONE).multiply(n).divide(BigInteger.valueOf(2));
+    }
+
+    /*private static boolean testCalculation(int value) {
         long count = countPartitions(value, value);
         System.out.println("value: " + value + " - " + count);
         return count % 1000000 == 0;
@@ -60,80 +83,19 @@ public class Problem_078 {
             sum += countPartitions(start-iter, iter);
         }
         return sum;
-    }
+    }*/
 
     public static void main(String[] args) {
-//        sample();
-        /*System.out.println(countPartitions(1, 1));
-        System.out.println(countPartitions(2, 2));
-        System.out.println(countPartitions(3, 3));
-        System.out.println(countPartitions(4, 4));
-        System.out.println(countPartitions(5, 5));*/
+        /*System.out.println(permutationFunction(BigInteger.valueOf(1)));
+        System.out.println(permutationFunction(BigInteger.valueOf(2)));
+        System.out.println(permutationFunction(BigInteger.valueOf(3)));
+        System.out.println(permutationFunction(BigInteger.valueOf(4)));
+        System.out.println(permutationFunction(BigInteger.valueOf(5)));*/
 
-        OptionalInt answer = IntStream.range(1, 1000)
-//                                      .skip(55)
-                                      .filter(i -> testCalculation(i))
+        OptionalInt answer = IntStream.range(1, 100000)
+                                      .filter(i -> permutationFunction(BigInteger.valueOf(i)).mod(BigInteger.valueOf(1000000)).equals(BigInteger.ZERO))
                                       .findFirst();
 
         System.out.println("answer: " + answer);
-    }
-
-    private static final class DynamicCoinRestrictedEnumerationSpliterator extends MultipleElementSpliterator<List<Integer>> {
-
-        private final int size;
-
-        public DynamicCoinRestrictedEnumerationSpliterator(int size) {
-            super(Long.MAX_VALUE, Spliterator.NONNULL);
-            this.size = size;
-        }
-
-        @Override
-        protected boolean tryAdvanceMultiple(Consumer<? super List<Integer>> action) {
-            List<Integer> seed = IntStream.rangeClosed(1, size).boxed().collect(Collectors.toList());
-
-            recursiveConsumer(Collections.emptyList(), seed, action);
-            return false;
-        }
-
-        private void recursiveConsumer(List<Integer> head, List<Integer> allowed, Consumer<? super List<Integer>> action) {
-            int sum = head.stream().mapToInt(i -> i).sum();
-            if(sum == size) {
-                action.accept(head);
-            } else if(sum < size) {
-                for (Integer coin : allowed) {
-                    final List<Integer> newAllowed = allowed.stream().filter(m -> coin.compareTo(m) <= 0).collect(Collectors
-                            .toList());
-                    recursiveConsumer(Stream.concat(head.stream(), Stream.of(coin)).collect(Collectors.toList()), newAllowed, action);
-                }
-            }
-        }
-    }
-
-    private static final class Partition {
-        private final long p;
-        private final long n;
-
-        public Partition(long p, long n) {
-            this.p = p;
-            this.n = n;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-
-            Partition partition = (Partition) o;
-
-            if (p != partition.p) return false;
-            return n == partition.n;
-        }
-
-        @Override
-        public int hashCode() {
-            int result = (int) (p ^ (p >>> 32));
-            result = 31 * result + (int) (n ^ (n >>> 32));
-            return result;
-        }
     }
 }
